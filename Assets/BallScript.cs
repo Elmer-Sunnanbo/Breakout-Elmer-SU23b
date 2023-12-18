@@ -12,12 +12,14 @@ public class BallScript : MonoBehaviour
     Rigidbody2D TheRB;
     Transform TheT;
     [SerializeField] GameRunner GRunner;
+    bool dead = false;
+    [SerializeField] GameObject PSys;
     
     void Start()
     {
         Speed = 3;
         TheRB = gameObject.GetComponent<Rigidbody2D>();
-        TheRB.velocity = new Vector2(1*Speed,-1*Speed);
+        TheRB.velocity = new Vector2(1*Speed,1*Speed);
         TheT = gameObject.GetComponent<Transform>();
     }
     // Update is called once per frame
@@ -42,13 +44,19 @@ public class BallScript : MonoBehaviour
         }
         TheRB.velocity = new Vector2(XVel * Speed, YVel * Speed);
         Speed = 6.5f - GRunner.BricksLeft * 0.1f + GRunner.Wins;
-        if (TheT.position.y <= - 2)
+        if (TheT.position.y <= -1)
         {
-            GRunner.MoveUpText();
+            if (dead == false)
+            {
+                DeathParticle();
+                GRunner.MoveUpText();
+            }
+            dead = true;
             if (Input.GetKeyDown(KeyCode.Space))
             {
                 GRunner.ResetBall();
-                TheRB.velocity = new Vector2(1 * Speed, -1 * Speed);
+                dead = false;
+                TheRB.velocity = new Vector2(1 * Speed, 1 * Speed);
                 TheT.position = new Vector2(0, 3);
             }
         }
@@ -61,5 +69,18 @@ public class BallScript : MonoBehaviour
             Destroy(collision.gameObject);
             GRunner.BreakBrick();
         }
+        if (collision.gameObject.GetComponent<PaddleControls>() != null)
+        {
+            if (GRunner.RestartPrimed == true)
+            {
+                GRunner.RestartPrimed = false;
+                GRunner.StartGame();
+            }
+        }
+    }
+    void DeathParticle()
+    {
+        PSys.GetComponent<Transform>().position = new Vector2(TheT.position.x, -1);
+        PSys.GetComponent<ParticleSystem>().Play();
     }
 }
